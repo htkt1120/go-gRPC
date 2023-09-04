@@ -25,6 +25,7 @@ type greeter_server struct {
 
 // UnaryHello implements helloworld.GreeterServer
 func (s *greeter_server) UnaryHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloReply, error) {
+	// recv metadata
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		log.Println(md)
 	}
@@ -77,6 +78,7 @@ func (s *greeter_server) HelloClientStream(stream pb.Greeter_HelloClientStreamSe
 }
 
 func (s *greeter_server) HelloBiStreams(stream pb.Greeter_HelloBiStreamsServer) error {
+	// recv metadata
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 		log.Println(md)
 	}
