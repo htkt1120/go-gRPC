@@ -11,11 +11,23 @@ import (
 	pb "grpc/pkg/grpc"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func NewGreaterServer() *greeter_server {
 	return &greeter_server{}
+}
+
+func validateName(s string) error {
+	if s == "" {
+		return status.Error(codes.InvalidArgument, "name is none")
+	}
+	if len(s) > 5 {
+		return status.Error(codes.InvalidArgument, "name is long")
+	}
+	return nil
 }
 
 // server is used to implement helloworld.GreeterServer.
@@ -25,6 +37,7 @@ type greeter_server struct {
 
 // UnaryHello implements helloworld.GreeterServer
 func (s *greeter_server) UnaryHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloReply, error) {
+	// recv metadata
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		log.Println(md)
 	}
@@ -37,6 +50,10 @@ func (s *greeter_server) UnaryHello(ctx context.Context, req *pb.HelloRequest) (
 
 	trailerMD := metadata.New(map[string]string{"type": "unary", "from": "server", "in": "trailer"})
 	if err := grpc.SetTrailer(ctx, trailerMD); err != nil {
+		return nil, err
+	}
+
+	if err := validateName(req.GetName()); err != nil {
 		return nil, err
 	}
 
@@ -77,6 +94,7 @@ func (s *greeter_server) HelloClientStream(stream pb.Greeter_HelloClientStreamSe
 }
 
 func (s *greeter_server) HelloBiStreams(stream pb.Greeter_HelloBiStreamsServer) error {
+	// recv metadata
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 		log.Println(md)
 	}

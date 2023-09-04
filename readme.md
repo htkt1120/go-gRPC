@@ -27,3 +27,10 @@ go run main.go
 cd cmd/client
 go run main.go
 ```
+
+## greeter testコマンド
+```
+cd d cmd/server/greeter
+go test
+```
+
