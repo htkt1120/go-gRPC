@@ -11,11 +11,23 @@ import (
 	pb "grpc/pkg/grpc"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func NewGreaterServer() *greeter_server {
 	return &greeter_server{}
+}
+
+func validateName(s string) error {
+	if s == "" {
+		return status.Error(codes.InvalidArgument, "name is none")
+	}
+	if len(s) > 5 {
+		return status.Error(codes.InvalidArgument, "name is long")
+	}
+	return nil
 }
 
 // server is used to implement helloworld.GreeterServer.
@@ -38,6 +50,10 @@ func (s *greeter_server) UnaryHello(ctx context.Context, req *pb.HelloRequest) (
 
 	trailerMD := metadata.New(map[string]string{"type": "unary", "from": "server", "in": "trailer"})
 	if err := grpc.SetTrailer(ctx, trailerMD); err != nil {
+		return nil, err
+	}
+
+	if err := validateName(req.GetName()); err != nil {
 		return nil, err
 	}
 

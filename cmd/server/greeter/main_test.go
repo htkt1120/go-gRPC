@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -38,12 +40,28 @@ func Test_greeter_server_UnaryHello(t *testing.T) {
 		req     *pb.HelloRequest
 		want    *pb.HelloReply
 		wantErr bool
+		err     error
 	}{
 		{
 			name:    "correct",
 			req:     &pb.HelloRequest{Name: "test"},
 			want:    &pb.HelloReply{Message: "Hello, test!"},
 			wantErr: false,
+			err:     nil,
+		},
+		{
+			name:    "name none error",
+			req:     &pb.HelloRequest{Name: ""},
+			want:    nil,
+			wantErr: true,
+			err:     status.Error(codes.InvalidArgument, "name is none"),
+		},
+		{
+			name:    "name long error",
+			req:     &pb.HelloRequest{Name: "AAAAAA"},
+			want:    nil,
+			wantErr: true,
+			err:     status.Error(codes.InvalidArgument, "name is long"),
 		},
 	}
 
@@ -62,7 +80,11 @@ func Test_greeter_server_UnaryHello(t *testing.T) {
 				t.Errorf("greeter_server.UnaryHello() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if res.GetMessage() != tt.want.Message {
+			if (tt.wantErr) && (!errors.Is(err, tt.err)) {
+				t.Errorf("greeter_server.UnaryHello() = %v, want %v", err, tt.err)
+			}
+
+			if (!tt.wantErr) && (res.GetMessage() != tt.want.Message) {
 				t.Errorf("greeter_server.UnaryHello() = %v, want %v", res, tt.want)
 			}
 		})
